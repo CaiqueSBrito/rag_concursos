@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.graph.workflow import app_graph
-
+from app.graph.state import GraphState
 router = APIRouter()
 
 @router.post("/chat")
@@ -12,7 +12,7 @@ async def chat_rag(question: str):
     print(f"🚀 [API] Nova pergunta recebida: {question}")
     
     # Preparamos o estado inicial do grafo
-    initial_state = {"question": question, "documents": [], "generation": ""}
+    initial_state = GraphState(question=question, documents=[], generation="")
     
     # Invocamos o grafo (isso dispara automaticamente o retrieve e depois o generate)
     final_state = app_graph.invoke(initial_state)
