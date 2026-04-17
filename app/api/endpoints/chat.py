@@ -12,12 +12,9 @@ async def chat_rag(question: str):
     print(f"🚀 [API] Nova pergunta recebida: {question}")
     
     # Preparamos o estado inicial do grafo
-    initial_state = GraphState(question=question, documents=[], generation="")
+    initial_state = GraphState(question=question, documents=[],retrieval_scores=[],generation="",has_relevant_context=False)
     
     # Invocamos o grafo (isso dispara automaticamente o retrieve e depois o generate)
     final_state = app_graph.invoke(initial_state)
     
-    return {
-        "resposta": final_state["generation"],
-        "documentos_usados": [doc.metadata for doc in final_state["documents"]]
-    }
+    return final_state
