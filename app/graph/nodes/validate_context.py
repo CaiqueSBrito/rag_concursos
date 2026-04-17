@@ -5,9 +5,9 @@ def validate_context(state: GraphState):
     scores = state["retrieval_scores"]
     documents = state["documents"]
 
-    if not documents:
+    if not documents or not scores:
         return {"has_relevant_context": False}
-    
+
     max_score = max(scores)
     avg_score = sum(scores) / len(scores)
 

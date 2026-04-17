@@ -23,6 +23,9 @@ def ingest_documents(pdf_path: str):
         chunk_overlap=200,
     )
     splits = text_splitter.split_documents(docs)
+    for index, split in enumerate(splits):
+        page = split.metadata.get("page", "na")
+        split.metadata["chunk_id"] = f"{pdf_path}:{page}:{index}"
     print(f"Texto dividido em {len(splits)} blocos")
 
     embeddings = GoogleGenerativeAIEmbeddings(

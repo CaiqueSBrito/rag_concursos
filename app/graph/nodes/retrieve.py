@@ -12,14 +12,43 @@ def retrieve(state: GraphState):
     print("[No: Retrieve] Buscando documentos relevantes...")
 
     question = state["question"]
+    excluded_doc_ids = set(state.get("excluded_doc_ids", []))
 
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=settings.GEMINI_API_KEY,)
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001",
+        google_api_key=settings.GEMINI_API_KEY,
+    )
     vectorstore = get_vectorstore(embeddings=embeddings)
 
-    results = vectorstore.similarity_search_with_relevance_scores(question, k=6, score_threshold=0.35,)
+    raw_results = vectorstore.similarity_search_with_relevance_scores(
+        question,
+        k=20,
+        score_threshold=0.20,
+    )
+
+    filtered_results = []
+    for doc, score in raw_results:
+        chunk_id = doc.metadata.get("chunk_id")
+        if chunk_id and chunk_id in excluded_doc_ids:
+            continue
+        filtered_results.append((doc, score))
+
+    results = filtered_results[:6]
     documents = [doc for doc, _ in results]
     scores = [score for _, score in results]
 
-    has_relevant_context = (len(documents) > 0 and max(scores) >= 0.45 and (sum(scores) / len(scores)) >= 0.40)
+    has_relevant_context = (
+        len(documents) > 0
+        and len(scores) > 0
+        and max(scores) >= 0.45
+        and (sum(scores) / len(scores)) >= 0.40
+    )
 
-    return {"documents": documents,"retrieval_scores": scores,"question": question,"has_relevant_context": has_relevant_context,}
+    return {
+        "documents": documents,
+        "retrieval_scores": scores,
+        "question": question,
+        "has_relevant_context": has_relevant_context,
+        "retrieval_attempt": state.get("retrieval_attempt", 0) + 1,
+        "fallback_reason": "",
+    }
