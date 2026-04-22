@@ -1,11 +1,11 @@
 import os
 
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.core.config import settings
 from app.repositories.chroma_repository import build_vectorstore_from_documents
+from app.services.embedding_service import get_embeddings_model
 
 
 def ingest_documents(pdf_path: str):
@@ -18,23 +18,20 @@ def ingest_documents(pdf_path: str):
     docs = loader.load()
     print(f"Documento carregado ({len(docs)} paginas)")
 
-    text_splitter = RecursiveCharacterTextSplitter(
+    text_chunks = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
     )
-    splits = text_splitter.split_documents(docs)
-    for index, split in enumerate(splits):
-        page = split.metadata.get("page", "na")
-        split.metadata["chunk_id"] = f"{pdf_path}:{page}:{index}"
-    print(f"Texto dividido em {len(splits)} blocos")
+    chunks = text_chunks.split_documents(docs)
+    for index, chunk in enumerate(chunks):
+        page = chunk.metadata.get("page", "na")
+        chunk.metadata["chunk_id"] = f"{pdf_path}:{page}:{index}"
+    print(f"Texto dividido em {len(chunks)} blocos")
 
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001",
-        google_api_key=settings.GEMINI_API_KEY,
-    )
+    embeddings = get_embeddings_model()
 
     vectorstore = build_vectorstore_from_documents(
-        documents=splits,
+        documents=chunks,
         embeddings=embeddings,
     )
 
@@ -46,7 +43,7 @@ def ingest_documents(pdf_path: str):
 
 
 if __name__ == "__main__":
-    mock_pdf = "data/raw/rag_langgraph_mock_dataset.pdf"
+    mock_pdf = "data/raw/rag_langgraph_mock_da4taset.pdf"
     if os.path.exists(mock_pdf):
         ingest_documents(mock_pdf)
     else:

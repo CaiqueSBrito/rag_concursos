@@ -1,8 +1,6 @@
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
-from app.core.config import settings
 from app.graph.state import GraphState
 from app.repositories.chroma_repository import get_vectorstore
+from app.services.embedding_service import get_embeddings_model
 
 
 def retrieve(state: GraphState):
@@ -14,10 +12,8 @@ def retrieve(state: GraphState):
     question = state["question"]
     excluded_doc_ids = set(state.get("excluded_doc_ids", []))
 
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001",
-        google_api_key=settings.GEMINI_API_KEY,
-    )
+    embeddings = get_embeddings_model()
+    
     vectorstore = get_vectorstore(embeddings=embeddings)
 
     raw_results = vectorstore.similarity_search_with_relevance_scores(
